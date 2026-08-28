@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Submit an update — Al-Rasekhoon Family Register</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-row">
+    <div>
+      <h1 class="masthead-title">Add / update <em>a record</em></h1>
+      <p class="masthead-sub">Goes to the admin for approval — nothing changes on the register until it's approved</p>
+    </div>
+    <nav class="masthead-nav">
+      <a class="btn btn-ghost" href="index.html">← Back to register</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page" style="max-width:760px;">
+
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="modeUpdateBtn" type="button">
+      <strong>Update an existing student</strong>
+      <span>Fix or add details for someone already listed</span>
+    </button>
+    <button class="mode-btn" id="modeNewBtn" type="button">
+      <strong>Add a new student</strong>
+      <span>Not on the register yet</span>
+    </button>
+  </div>
+
+  <div id="banner"></div>
+
+  <div class="card form-card">
+
+    <div id="findStudentBlock">
+      <div class="form-row autocomplete">
+        <label for="findInput">Find the student</label>
+        <input id="findInput" type="text" placeholder="Start typing a student or father's name…" autocomplete="off" />
+        <div class="autocomplete-list" id="autocompleteList" hidden></div>
+      </div>
+      <div id="selectedStudentNote" class="form-hint"></div>
+    </div>
+
+    <form id="recordForm">
+      <div id="formFields"></div>
+
+      <div class="form-row">
+        <label for="submitterNote">Your name / contact (optional, helps the admin follow up)</label>
+        <input id="submitterNote" type="text" placeholder="e.g. Fazal Ahmad, 03xx-xxxxxxx" />
+      </div>
+
+      <button class="btn btn-red" type="submit" id="submitBtn">Send for approval</button>
+    </form>
+  </div>
+
+</main>
+
+<script type="module" src="assets/submit.js"></script>
+</body>
+</html>

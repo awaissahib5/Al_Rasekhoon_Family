@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Al-Rasekhoon — Family Register</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-row">
+    <div>
+      <h1 class="masthead-title">Al-Rasekhoon <em>Family Register</em></h1>
+      <p class="masthead-sub">Students under sponsorship — live record</p>
+    </div>
+    <nav class="masthead-nav">
+      <a class="btn btn-red" href="submit.html">+ Add / update a record</a>
+      <a class="btn btn-ghost" href="admin.html">Admin</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <div class="toolbar">
+    <input class="search-input" id="search" type="text"
+      placeholder="Search by student, father's name, family chain, institute…" />
+    <select class="chip-select" id="familyFilter">
+      <option value="">All family chains</option>
+    </select>
+    <span class="result-count" id="resultCount"></span>
+  </div>
+
+  <div id="content">
+    <div class="card" style="padding:24px;">
+      <div class="skeleton" style="width:40%;margin-bottom:10px;"></div>
+      <div class="skeleton" style="width:70%;margin-bottom:10px;"></div>
+      <div class="skeleton" style="width:55%;"></div>
+    </div>
+  </div>
+
+  <p class="footer-note">Spotted a mistake, or a Contact # that's missing? Use "Add / update a record" above —
+    changes go to the admin for approval before they appear here.</p>
+</main>
+
+<script type="module" src="assets/view.js"></script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>One-time import — Al-Rasekhoon Family Register</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-row">
+    <div>
+      <h1 class="masthead-title">One-time <em>data import</em></h1>
+      <p class="masthead-sub">Loads the 90 records from the original Excel file into the register</p>
+    </div>
+    <nav class="masthead-nav">
+      <a class="btn btn-ghost" href="index.html">← Register</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page" style="max-width:640px;">
+  <div class="card form-card">
+    <div id="loginBlock">
+      <p>Log in as admin first (same account as the admin page).</p>
+      <div id="loginBanner"></div>
+      <form id="loginForm">
+        <div class="form-row"><label for="email">Email</label><input id="email" type="email" required /></div>
+        <div class="form-row"><label for="password">Password</label><input id="password" type="password" required /></div>
+        <button class="btn btn-red" type="submit">Log in</button>
+      </form>
+    </div>
+
+    <div id="importBlock" hidden>
+      <p id="statusText">Ready to import <strong id="rowCount">…</strong> records from <code>data/students-seed.json</code>.</p>
+      <p class="form-hint">Safe to run once. Run it again only if you've cleared the <code>students</code> collection first — otherwise it will create duplicates.</p>
+      <button class="btn btn-red" id="importBtn">Import into Firestore</button>
+      <div id="importBanner" style="margin-top:16px;"></div>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+import { db, auth, collection, addDoc, serverTimestamp, onAuthStateChanged, signInWithEmailAndPassword } from "./assets/app.js";
+
+const loginBlock = document.getElementById("loginBlock");
+const importBlock = document.getElementById("importBlock");
+const loginForm = document.getElementById("loginForm");
+const loginBanner = document.getElementById("loginBanner");
+const importBtn = document.getElementById("importBtn");
+const importBanner = document.getElementById("importBanner");
+const rowCountEl = document.getElementById("rowCount");
+
+let seedData = [];
+fetch("data/students-seed.json").then(r => r.json()).then(d => {
+  seedData = d;
+  rowCountEl.textContent = d.length;
+});
+
+onAuthStateChanged(auth, user => {
+  loginBlock.hidden = !!user;
+  importBlock.hidden = !user;
+});
+
+loginForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  loginBanner.innerHTML = "";
+  try {
+    await signInWithEmailAndPassword(auth, document.getElementById("email").value.trim(), document.getElementById("password").value);
+  } catch (err) {
+    loginBanner.innerHTML = `<div class="banner banner-error">${err.message}</div>`;
+  }
+});
+
+importBtn.addEventListener("click", async () => {
+  importBtn.disabled = true;
+  importBtn.textContent = "Importing…";
+  let done = 0;
+  try {
+    for (const row of seedData) {
+      await addDoc(collection(db, "students"), { ...row, updatedAt: serverTimestamp() });
+      done++;
+      importBtn.textContent = `Importing… ${done}/${seedData.length}`;
+    }
+    importBanner.innerHTML = `<div class="banner banner-success">Imported ${done} records. <a href="index.html">View the register →</a></div>`;
+  } catch (err) {
+    importBanner.innerHTML = `<div class="banner banner-error">Stopped after ${done} records: ${err.message}</div>`;
+  } finally {
+    importBtn.disabled = false;
+    importBtn.textContent = "Import into Firestore";
+  }
+});
+</script>
+</body>
+</html>

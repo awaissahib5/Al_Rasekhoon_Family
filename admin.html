@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — Al-Rasekhoon Family Register</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-row">
+    <div>
+      <h1 class="masthead-title">Admin <em>review</em></h1>
+      <p class="masthead-sub">Approve or reject submitted updates</p>
+    </div>
+    <nav class="masthead-nav">
+      <a class="btn btn-ghost" href="index.html">← Register</a>
+      <button class="btn btn-ghost" id="logoutBtn" hidden>Log out</button>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <div id="loginView" class="card login-shell" hidden>
+    <h1>Admin log in</h1>
+    <div id="loginBanner"></div>
+    <form id="loginForm">
+      <div class="form-row">
+        <label for="email">Email</label>
+        <input id="email" type="email" required autocomplete="username" />
+      </div>
+      <div class="form-row">
+        <label for="password">Password</label>
+        <input id="password" type="password" required autocomplete="current-password" />
+      </div>
+      <button class="btn btn-red" type="submit" style="width:100%;">Log in</button>
+    </form>
+  </div>
+
+  <div id="pendingView" hidden>
+    <div class="toolbar">
+      <span class="result-count" id="pendingCount"></span>
+    </div>
+    <div class="card" id="pendingList"></div>
+  </div>
+
+</main>
+
+<script type="module" src="assets/admin.js"></script>
+</body>
+</html>
