@@ -4,7 +4,7 @@
 // → Web app → SDK setup and configuration → "Config".
 // See README.md for the full step-by-step.
 // ============================================================
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyDaW7jef2fAyK1BNdZM_-U7u2AI9J72xSw",
   authDomain: "al-rasekhoon.firebaseapp.com",
   projectId: "al-rasekhoon",
