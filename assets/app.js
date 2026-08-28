@@ -19,6 +19,17 @@ export {
   onAuthStateChanged, signInWithEmailAndPassword, signOut
 };
 
+// Options for the Status field — value is what's stored, label is
+// what's shown. Add/rename entries here if you need a different set.
+export const STATUS_OPTIONS = [
+  { value: "",           label: "— Not set —" },
+  { value: "active",     label: "Active" },
+  { value: "dropped",    label: "Dropped / Skipped Study" },
+  { value: "irregular",  label: "Irregular Attendance" },
+  { value: "graduated",  label: "Graduated / Passed Out" },
+  { value: "other",      label: "Other (see remarks)" }
+];
+
 // The fields every student record has. Order here drives form
 // order and diff order everywhere in the app.
 export const FIELDS = [
@@ -26,6 +37,7 @@ export const FIELDS = [
   { key: "studentName",   label: "Student Name",              type: "text", required: true },
   { key: "fatherName",    label: "Father Name",               type: "text", required: true },
   { key: "presentClass",  label: "Present Class",              type: "text" },
+  { key: "status",        label: "Status",                     type: "select", options: STATUS_OPTIONS },
   { key: "instituteName", label: "Institute Name",             type: "text" },
   { key: "totalMarks",    label: "Total Marks (last class)",   type: "text" },
   { key: "obtMarks",      label: "Obtained Marks (last class)",type: "text" },
@@ -33,6 +45,11 @@ export const FIELDS = [
   { key: "familyChain",   label: "Family Chain",               type: "text", required: true },
   { key: "remarks",       label: "Remarks / Future Plan",      type: "textarea" }
 ];
+
+export function statusLabel(value){
+  const found = STATUS_OPTIONS.find(o => o.value === (value || ""));
+  return found ? found.label : value;
+}
 
 export function escapeHtml(str){
   return String(str ?? "").replace(/[&<>"']/g, c => ({

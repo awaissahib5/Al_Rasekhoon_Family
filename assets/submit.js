@@ -98,6 +98,14 @@ function renderFields(prefill){
         <textarea id="f_${f.key}" name="${f.key}" rows="3">${val}</textarea>
       </div>`;
     }
+    if (f.type === "select") {
+      return `<div class="form-row">
+        <label for="f_${f.key}">${f.label}${f.required ? " *" : ""}</label>
+        <select id="f_${f.key}" name="${f.key}">
+          ${f.options.map(o => `<option value="${escapeHtml(o.value)}" ${o.value === fmt(prefill[f.key]) ? "selected" : ""}>${escapeHtml(o.label)}</option>`).join("")}
+        </select>
+      </div>`;
+    }
     return `<div class="form-row">
       <label for="f_${f.key}">${f.label}${f.required ? " *" : ""}</label>
       <input id="f_${f.key}" name="${f.key}" type="text" value="${val}" ${f.required ? "required" : ""} />

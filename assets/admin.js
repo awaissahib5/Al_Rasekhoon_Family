@@ -2,7 +2,7 @@ import {
   db, auth, collection, doc, getDocs, updateDoc, addDoc, deleteDoc,
   onSnapshot, query, orderBy, serverTimestamp,
   onAuthStateChanged, signInWithEmailAndPassword, signOut,
-  FIELDS, escapeHtml, fmt
+  FIELDS, escapeHtml, fmt, statusLabel
 } from "./app.js";
 
 const loginView = document.getElementById("loginView");
@@ -78,10 +78,11 @@ function nextSuggestedSr(){
 
 function diffRow(field, oldVal, newVal){
   const changed = fmt(oldVal) !== fmt(newVal) && fmt(newVal) !== "";
+  const display = v => field.key === "status" ? statusLabel(fmt(v)) : fmt(v);
   return `
     <div class="field-name">${field.label}</div>
-    <div class="${changed ? "diff-old diff-changed" : "diff-old"}">${fmt(oldVal) ? escapeHtml(fmt(oldVal)) : "—"}</div>
-    <div class="${changed ? "diff-new diff-changed" : ""}">${fmt(newVal) ? escapeHtml(fmt(newVal)) : "<span class=\"muted\">(unchanged)</span>"}</div>
+    <div class="${changed ? "diff-old diff-changed" : "diff-old"}">${fmt(oldVal) ? escapeHtml(display(oldVal)) : "—"}</div>
+    <div class="${changed ? "diff-new diff-changed" : ""}">${fmt(newVal) ? escapeHtml(display(newVal)) : "<span class=\"muted\">(unchanged)</span>"}</div>
   `;
 }
 

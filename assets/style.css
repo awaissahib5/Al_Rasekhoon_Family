@@ -263,6 +263,25 @@ table.register-table{
 }
 .empty-cell{ color: var(--line); }
 
+/* status tags */
+.status-tag{
+  display:inline-block;
+  font-weight: 700;
+  font-size: .78rem;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.status-ok{ background: var(--moss-dim); color: var(--moss); }
+.status-flag{ background: #F6DEDB; color: var(--ledger-red); }
+
+/* a whole record that needs attention: bold name + red-tinted left edge */
+tr.row-flagged td{ font-weight: 600; background: #FBF3F1; }
+tr.row-flagged .student-name{ color: var(--ledger-red); }
+tr.row-flagged:hover td{ background: #F6DEDB; }
+.reg-card.row-flagged{ background: #FBF3F1; border-left: 3px solid var(--ledger-red); padding-left: 11px; }
+.reg-card.row-flagged .student-name{ color: var(--ledger-red); font-weight: 700; }
+
 /* mobile: stacked cards instead of table */
 .register-cards{ display:none; }
 @media (max-width: 720px){

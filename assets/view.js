@@ -1,4 +1,4 @@
-import { db, collection, onSnapshot, query, orderBy, escapeHtml, fmt, debounce } from "./app.js";
+import { db, collection, onSnapshot, query, orderBy, escapeHtml, fmt, debounce, statusLabel } from "./app.js";
 
 const contentEl = document.getElementById("content");
 const searchEl = document.getElementById("search");
@@ -10,6 +10,15 @@ let allStudents = [];
 function cell(v){
   const s = fmt(v);
   return s ? escapeHtml(s) : `<span class="empty-cell">—</span>`;
+}
+
+// statuses that should visually stand out as needing attention
+const FLAGGED_STATUSES = new Set(["dropped", "irregular"]);
+
+function statusBadge(status){
+  if (!status) return `<span class="empty-cell">—</span>`;
+  const flagged = FLAGGED_STATUSES.has(status);
+  return `<span class="status-tag ${flagged ? "status-flag" : "status-ok"}">${escapeHtml(statusLabel(status))}</span>`;
 }
 
 function render(){
@@ -57,16 +66,17 @@ function render(){
       <div class="register">
         <table class="register-table">
           <thead><tr>
-            <th>Sr.#</th><th>Student</th><th>Father</th><th>Class</th>
+            <th>Sr.#</th><th>Student</th><th>Father</th><th>Class</th><th>Status</th>
             <th>Institute</th><th>Marks</th><th>Contact #</th><th>Remarks</th>
           </tr></thead>
           <tbody>
             ${students.map(s => `
-              <tr>
+              <tr class="${FLAGGED_STATUSES.has(s.status) ? "row-flagged" : ""}">
                 <td class="sr-badge">${cell(s.sr)}</td>
                 <td class="student-name">${cell(s.studentName)}</td>
                 <td class="muted">${cell(s.fatherName)}</td>
                 <td>${cell(s.presentClass)}</td>
+                <td>${statusBadge(s.status)}</td>
                 <td class="muted">${cell(s.instituteName)}</td>
                 <td class="marks">${s.totalMarks || s.obtMarks ? `${cell(s.obtMarks)} / ${cell(s.totalMarks)}` : `<span class="empty-cell">—</span>`}</td>
                 <td class="marks">${cell(s.contact)}</td>
@@ -76,7 +86,7 @@ function render(){
         </table>
         <div class="register-cards">
           ${students.map(s => `
-            <div class="reg-card">
+            <div class="reg-card ${FLAGGED_STATUSES.has(s.status) ? "row-flagged" : ""}">
               <div class="reg-card-top">
                 <span class="student-name">${cell(s.studentName)}</span>
                 <span class="sr-badge">#${cell(s.sr)}</span>
@@ -84,6 +94,7 @@ function render(){
               <dl>
                 <dt>Father</dt><dd>${cell(s.fatherName)}</dd>
                 <dt>Class</dt><dd>${cell(s.presentClass)}</dd>
+                <dt>Status</dt><dd>${statusBadge(s.status)}</dd>
                 <dt>Institute</dt><dd>${cell(s.instituteName)}</dd>
                 <dt>Marks</dt><dd>${s.totalMarks || s.obtMarks ? `${cell(s.obtMarks)} / ${cell(s.totalMarks)}` : "—"}</dd>
                 <dt>Contact</dt><dd>${cell(s.contact)}</dd>
