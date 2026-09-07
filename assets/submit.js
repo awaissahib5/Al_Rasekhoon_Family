@@ -1,6 +1,6 @@
 import {
   db, collection, getDocs, addDoc, serverTimestamp,
-  FIELDS, escapeHtml, fmt, debounce
+  FIELDS, escapeHtml, fmt, debounce, FAMILY_CHAIN_OTHER
 } from "./app.js";
 
 const modeUpdateBtn = document.getElementById("modeUpdateBtn");
@@ -18,13 +18,23 @@ const FORM_FIELDS = FIELDS.filter(f => f.key !== "sr"); // admin assigns Sr.# on
 
 let mode = "update"; // "update" | "new"
 let allStudents = [];
+let familyChains = []; // [{id, name}]
 let selectedStudent = null;
+let currentPrefill = null; // what the form is currently showing (null = nothing loaded yet)
 
-// -- load students once for search/prefill --
+// -- load students + family chains once for search/prefill/dropdown --
 getDocs(collection(db, "students")).then(snap => {
   allStudents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }).catch(err => {
   showBanner("error", "Couldn't load the student list: " + err.message);
+});
+
+getDocs(collection(db, "familyChains")).then(snap => {
+  familyChains = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  if (currentPrefill !== null) renderFields(currentPrefill); // refresh if form already drawn
+}).catch(err => {
+  showBanner("error", "Couldn't load the family chain list: " + err.message);
 });
 
 function showBanner(kind, msg){
@@ -83,7 +93,42 @@ document.addEventListener("click", (e) => {
 });
 
 // -- dynamic form fields --
+function renderFamilyChainField(f, prefill){
+  const currentVal = fmt(prefill[f.key]);
+  const matchesKnown = familyChains.some(c => c.name === currentVal);
+  const isOther = !!currentVal && !matchesKnown;
+
+  return `<div class="form-row">
+    <label for="fc_${f.key}_select">${f.label}${f.required ? " *" : ""}</label>
+    <select id="fc_${f.key}_select">
+      <option value="">— Select —</option>
+      ${familyChains.map(c => `<option value="${escapeHtml(c.name)}" ${!isOther && c.name === currentVal ? "selected" : ""}>${escapeHtml(c.name)}</option>`).join("")}
+      <option value="${FAMILY_CHAIN_OTHER}" ${isOther ? "selected" : ""}>None of the Above</option>
+    </select>
+    <input id="f_${f.key}" name="${f.key}" type="text" value="${escapeHtml(currentVal)}"
+      placeholder="Type the family chain name"
+      style="margin-top:8px;${isOther ? "" : "display:none;"}" />
+  </div>`;
+}
+
+function wireFamilyChainField(f){
+  const select = document.getElementById(`fc_${f.key}_select`);
+  const input = document.getElementById(`f_${f.key}`);
+  if (!select || !input) return;
+  select.addEventListener("change", () => {
+    if (select.value === FAMILY_CHAIN_OTHER) {
+      input.value = "";
+      input.style.display = "";
+      input.focus();
+    } else {
+      input.value = select.value;
+      input.style.display = "none";
+    }
+  });
+}
+
 function renderFields(prefill){
+  currentPrefill = prefill;
   if (prefill === null) {
     formFieldsEl.innerHTML = `<p class="form-hint" style="margin-top:0;">Search and select a student above to load the update form.</p>`;
     submitBtn.disabled = true;
@@ -92,6 +137,9 @@ function renderFields(prefill){
   submitBtn.disabled = false;
   formFieldsEl.innerHTML = FORM_FIELDS.map(f => {
     const val = escapeHtml(fmt(prefill[f.key]));
+
+    if (f.key === "familyChain") return renderFamilyChainField(f, prefill);
+
     if (f.type === "textarea") {
       return `<div class="form-row">
         <label for="f_${f.key}">${f.label}${f.required ? " *" : ""}</label>
@@ -108,9 +156,11 @@ function renderFields(prefill){
     }
     return `<div class="form-row">
       <label for="f_${f.key}">${f.label}${f.required ? " *" : ""}</label>
-      <input id="f_${f.key}" name="${f.key}" type="text" value="${val}" ${f.required ? "required" : ""} />
+      <input id="f_${f.key}" name="${f.key}" type="text" value="${val}" />
     </div>`;
   }).join("");
+
+  wireFamilyChainField(FIELDS.find(f => f.key === "familyChain"));
 }
 renderFields(null);
 setMode("update");
@@ -132,6 +182,10 @@ form.addEventListener("submit", async (e) => {
   }
   if (!submittedData.studentName || !submittedData.fatherName) {
     showBanner("error", "Student name and father's name are required.");
+    return;
+  }
+  if (!submittedData.familyChain) {
+    showBanner("error", "Please choose a family chain (or select \"None of the Above\" and type it in).");
     return;
   }
 

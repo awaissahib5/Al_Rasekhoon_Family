@@ -19,6 +19,10 @@ export {
   onAuthStateChanged, signInWithEmailAndPassword, signOut
 };
 
+// Sentinel value used by the Family Chain dropdown for "None of the
+// Above" — when selected, the submit form shows a free-text box instead.
+export const FAMILY_CHAIN_OTHER = "__other__";
+
 // Options for the Status field — value is what's stored, label is
 // what's shown. Add/rename entries here if you need a different set.
 export const STATUS_OPTIONS = [
@@ -32,6 +36,9 @@ export const STATUS_OPTIONS = [
 
 // The fields every student record has. Order here drives form
 // order and diff order everywhere in the app.
+// familyChain is type "family-select" and gets special handling in
+// submit.js (dropdown sourced from the familyChains collection, with
+// a free-text fallback), not the generic text/select rendering.
 export const FIELDS = [
   { key: "sr",            label: "Sr. #",                    type: "number" },
   { key: "studentName",   label: "Student Name",              type: "text", required: true },
@@ -42,7 +49,7 @@ export const FIELDS = [
   { key: "totalMarks",    label: "Total Marks (last class)",   type: "text" },
   { key: "obtMarks",      label: "Obtained Marks (last class)",type: "text" },
   { key: "contact",       label: "Contact #",                  type: "text" },
-  { key: "familyChain",   label: "Family Chain",               type: "text", required: true },
+  { key: "familyChain",   label: "Family Chain",               type: "family-select", required: true },
   { key: "remarks",       label: "Remarks / Future Plan",      type: "textarea" }
 ];
 
