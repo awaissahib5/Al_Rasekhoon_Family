@@ -1,8 +1,8 @@
 import {
-  db, auth, collection, doc, getDocs, updateDoc, addDoc, deleteDoc,
+  db, auth, collection, doc, getDocs, addDoc, updateDoc, deleteDoc,
   onSnapshot, query, orderBy, serverTimestamp,
   onAuthStateChanged, signInWithEmailAndPassword, signOut,
-  FIELDS, escapeHtml, fmt
+  FIELDS, escapeHtml, fmt, statusLabel
 } from "./app.js";
 
 const loginView = document.getElementById("loginView");
@@ -12,12 +12,24 @@ const loginBanner = document.getElementById("loginBanner");
 const logoutBtn = document.getElementById("logoutBtn");
 const pendingListEl = document.getElementById("pendingList");
 const pendingCountEl = document.getElementById("pendingCount");
+const chainListEl = document.getElementById("chainList");
+const chainForm = document.getElementById("chainForm");
+const chainInput = document.getElementById("chainInput");
+const chainBanner = document.getElementById("chainBanner");
 
 const DISPLAY_FIELDS = FIELDS.filter(f => f.key !== "sr");
 
+const DEFAULT_FAMILY_CHAINS = [
+  "Fazal Ahmad", "Dilawar hussain", "Muhammad Nawaz", "Iqbal Hussain",
+  "Saleem Raza", "Faqeer Hussain", "Mashkoor Hussain", "Nokar Hussain",
+  "Haji Gulzar Hussain", "Mehdi Hassan", "Mukhtiar Hussain"
+];
+
 let studentsById = new Map();
-let unsubPending = null;
-let unsubStudents = null;
+let currentPendingDocs = [];
+let currentChains = []; // [{id, name}]
+let chainsSeeded = false;
+const unsubs = [];
 
 onAuthStateChanged(auth, user => {
   if (user) {
@@ -48,27 +60,79 @@ loginForm.addEventListener("submit", async (e) => {
 logoutBtn.addEventListener("click", () => signOut(auth));
 
 function startListening(){
-  unsubStudents = onSnapshot(collection(db, "students"), snap => {
+  unsubs.push(onSnapshot(collection(db, "students"), snap => {
     studentsById = new Map(snap.docs.map(d => [d.id, { id: d.id, ...d.data() }]));
     renderPending(currentPendingDocs);
-  });
-  unsubPending = onSnapshot(
+  }));
+
+  unsubs.push(onSnapshot(
     query(collection(db, "pending"), orderBy("submittedAt", "asc")),
     snap => {
       currentPendingDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderPending(currentPendingDocs);
     },
-    err => {
-      pendingListEl.innerHTML = `<div class="empty-state">${escapeHtml(err.message)}</div>`;
+    err => { pendingListEl.innerHTML = `<div class="empty-state">${escapeHtml(err.message)}</div>`; }
+  ));
+
+  unsubs.push(onSnapshot(collection(db, "familyChains"), async snap => {
+    if (snap.empty && !chainsSeeded) {
+      chainsSeeded = true; // avoid a double-seed race if this fires twice quickly
+      for (const name of DEFAULT_FAMILY_CHAINS) {
+        await addDoc(collection(db, "familyChains"), { name });
+      }
+      return; // the snapshot will fire again with the seeded data
     }
-  );
+    currentChains = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    renderChains();
+  }, err => {
+    chainListEl.innerHTML = `<div class="empty-state">${escapeHtml(err.message)}</div>`;
+  }));
 }
 function stopListening(){
-  if (unsubPending) unsubPending();
-  if (unsubStudents) unsubStudents();
+  while (unsubs.length) unsubs.pop()();
 }
 
-let currentPendingDocs = [];
+function renderChains(){
+  if (currentChains.length === 0) {
+    chainListEl.innerHTML = `<p class="muted" style="margin:0;">No family chains yet — add the first one below.</p>`;
+    return;
+  }
+  chainListEl.innerHTML = currentChains.map(c => `
+    <span class="chain-chip">
+      ${escapeHtml(c.name)}
+      <button type="button" class="chain-remove" data-id="${c.id}" title="Remove">×</button>
+    </span>`).join("");
+
+  chainListEl.querySelectorAll(".chain-remove").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const chain = currentChains.find(c => c.id === btn.dataset.id);
+      if (!confirm(`Remove "${chain?.name}" from the family chain list? This won't change any existing student records — only the dropdown on the submit form.`)) return;
+      try {
+        await deleteDoc(doc(db, "familyChains", btn.dataset.id));
+      } catch (err) {
+        alert("Couldn't remove: " + err.message);
+      }
+    });
+  });
+}
+
+chainForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  chainBanner.innerHTML = "";
+  const name = chainInput.value.trim();
+  if (!name) return;
+  if (currentChains.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+    chainBanner.innerHTML = `<div class="banner banner-error">"${escapeHtml(name)}" is already on the list.</div>`;
+    return;
+  }
+  try {
+    await addDoc(collection(db, "familyChains"), { name });
+    chainInput.value = "";
+  } catch (err) {
+    chainBanner.innerHTML = `<div class="banner banner-error">Couldn't add: ${escapeHtml(err.message)}</div>`;
+  }
+});
 
 function nextSuggestedSr(){
   let max = 0;
@@ -78,10 +142,11 @@ function nextSuggestedSr(){
 
 function diffRow(field, oldVal, newVal){
   const changed = fmt(oldVal) !== fmt(newVal) && fmt(newVal) !== "";
+  const display = v => field.key === "status" ? statusLabel(fmt(v)) : fmt(v);
   return `
     <div class="field-name">${field.label}</div>
-    <div class="${changed ? "diff-old diff-changed" : "diff-old"}">${fmt(oldVal) ? escapeHtml(fmt(oldVal)) : "—"}</div>
-    <div class="${changed ? "diff-new diff-changed" : ""}">${fmt(newVal) ? escapeHtml(fmt(newVal)) : "<span class=\"muted\">(unchanged)</span>"}</div>
+    <div class="${changed ? "diff-old diff-changed" : "diff-old"}">${fmt(oldVal) ? escapeHtml(display(oldVal)) : "—"}</div>
+    <div class="${changed ? "diff-new diff-changed" : ""}">${fmt(newVal) ? escapeHtml(display(newVal)) : "<span class=\"muted\">(unchanged)</span>"}</div>
   `;
 }
 
@@ -165,6 +230,11 @@ async function onApprove(itemEl){
       await updateDoc(doc(db, "students", p.targetId), payload);
     } else {
       await addDoc(collection(db, "students"), payload);
+    }
+    // if the submitted family chain isn't on the known list yet, add it
+    const chainName = (p.submittedData?.familyChain || "").trim();
+    if (chainName && !currentChains.some(c => c.name.toLowerCase() === chainName.toLowerCase())) {
+      await addDoc(collection(db, "familyChains"), { name: chainName });
     }
     await deleteDoc(doc(db, "pending", id));
   } catch (err) {

@@ -19,20 +19,44 @@ export {
   onAuthStateChanged, signInWithEmailAndPassword, signOut
 };
 
+// Sentinel value used by the Family Chain dropdown for "None of the
+// Above" — when selected, the submit form shows a free-text box instead.
+export const FAMILY_CHAIN_OTHER = "__other__";
+
+// Options for the Status field — value is what's stored, label is
+// what's shown. Add/rename entries here if you need a different set.
+export const STATUS_OPTIONS = [
+  { value: "",           label: "— Not set —" },
+  { value: "active",     label: "Active" },
+  { value: "dropped",    label: "Dropped / Skipped Study" },
+  { value: "irregular",  label: "Irregular Attendance" },
+  { value: "graduated",  label: "Graduated / Passed Out" },
+  { value: "other",      label: "Other (see remarks)" }
+];
+
 // The fields every student record has. Order here drives form
 // order and diff order everywhere in the app.
+// familyChain is type "family-select" and gets special handling in
+// submit.js (dropdown sourced from the familyChains collection, with
+// a free-text fallback), not the generic text/select rendering.
 export const FIELDS = [
   { key: "sr",            label: "Sr. #",                    type: "number" },
   { key: "studentName",   label: "Student Name",              type: "text", required: true },
   { key: "fatherName",    label: "Father Name",               type: "text", required: true },
   { key: "presentClass",  label: "Present Class",              type: "text" },
+  { key: "status",        label: "Status",                     type: "select", options: STATUS_OPTIONS },
   { key: "instituteName", label: "Institute Name",             type: "text" },
   { key: "totalMarks",    label: "Total Marks (last class)",   type: "text" },
   { key: "obtMarks",      label: "Obtained Marks (last class)",type: "text" },
   { key: "contact",       label: "Contact #",                  type: "text" },
-  { key: "familyChain",   label: "Family Chain",               type: "text", required: true },
+  { key: "familyChain",   label: "Family Chain",               type: "family-select", required: true },
   { key: "remarks",       label: "Remarks / Future Plan",      type: "textarea" }
 ];
+
+export function statusLabel(value){
+  const found = STATUS_OPTIONS.find(o => o.value === (value || ""));
+  return found ? found.label : value;
+}
 
 export function escapeHtml(str){
   return String(str ?? "").replace(/[&<>"']/g, c => ({
