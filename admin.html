@@ -40,6 +40,18 @@
   </div>
 
   <div id="pendingView" hidden>
+
+    <div class="card" style="padding:20px clamp(14px,2.5vw,24px); margin-bottom:24px;">
+      <h2 style="font-family:var(--font-display); font-size:1.05rem; margin:0 0 4px;">Family Chains</h2>
+      <p class="form-hint" style="margin-top:0;">Shown as a dropdown on the submit form. Add a new one here as new families join — no code changes needed.</p>
+      <div id="chainBanner"></div>
+      <div id="chainList" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;"></div>
+      <form id="chainForm" style="display:flex; gap:10px; flex-wrap:wrap;">
+        <input id="chainInput" type="text" placeholder="New family chain name…" style="flex:1 1 220px; padding:9px 12px; border:1.5px solid var(--line); border-radius:8px;" />
+        <button class="btn btn-moss btn-sm" type="submit">Add</button>
+      </form>
+    </div>
+
     <div class="toolbar">
       <span class="result-count" id="pendingCount"></span>
     </div>
