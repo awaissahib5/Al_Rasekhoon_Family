@@ -13,8 +13,8 @@
 // ============================================================
 export const emailNotifyConfig = {
   enabled: true,             // set to false to turn notifications off
-  publicKey: "PASTE_YOUR_EMAILJS_PUBLIC_KEY",
-  serviceId: "PASTE_YOUR_EMAILJS_SERVICE_ID",
-  templateId: "PASTE_YOUR_EMAILJS_TEMPLATE_ID",
-  adminEmail: "PASTE_YOUR_EMAIL@example.com"
+  publicKey: "gVE8kwyzgbYgE3opV",
+  serviceId: "service_3kiymqb",
+  templateId: "template_v8e2xor",
+  adminEmail: "zohodev2014@gmail.com"
 };
