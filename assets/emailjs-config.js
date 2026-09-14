@@ -16,5 +16,5 @@ export const emailNotifyConfig = {
   publicKey: "gVE8kwyzgbYgE3opV",
   serviceId: "service_3kiymqb",
   templateId: "template_v8e2xor",
-  adminEmail: "zohodev2014@gmail.com","p2164baqir@gmail.com"
+  adminEmail: "zohodev2014@gmail.com,p2164baqir@gmail.com"
 };
