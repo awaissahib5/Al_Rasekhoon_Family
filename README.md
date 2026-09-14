@@ -1,59 +1,42 @@
 # Al-Rasekhoon Family Register — online portal
 
-A small, free, self-hosted portal for the Family Register:
+- **`index.html`** — public register: search/filter, grouped by Family Chain, shows a bold red "Dropped / Irregular" tag for flagged students.
+- **`submit.html`** — public: add a student or request an update. Family Chain is a dropdown (with "None of the Above" → free text). Nothing goes live until approved.
+- **`admin.html`** — password-protected. Manage the Family Chains dropdown list at the top; review/approve/reject pending submissions below, with a field-by-field diff and a chosen Sr. #.
+- **`import-seed.html`** — one-time setup: two separate buttons, one to import the 90 student records, one to import the 11 family chains. Each button tells you if data already exists before you click, so you won't accidentally duplicate anything.
 
-- **`index.html`** — public page, anyone with the link can browse/search all ~90 records, grouped by Family Chain.
-- **`submit.html`** — public page to add a new student or request an update to an existing one. Nothing goes live immediately — it lands in a pending queue.
-- **`admin.html`** — password-protected. Shows every pending submission with a side-by-side diff against the current record, lets you pick which Sr. # (row) it should be saved as, and Approve or Reject it.
-- **`import-seed.html`** — a one-time page to load the 90 existing records (from your Excel file) into the database. Run it once, then you can ignore it (or delete the file).
-
-No server to maintain — the data lives in **Firebase Firestore** (Google's free database), and the pages are hosted for free on **GitHub Pages**.
+Data lives in **Firebase Firestore** (free). Pages are hosted for free on **GitHub Pages**.
 
 ---
 
-## 1. Create a free Firebase project (10 min)
+## 1. Firebase project setup
 
-1. Go to https://console.firebase.google.com and sign in with any Google account.
-2. Click **Add project** → name it e.g. `al-rasekhoon-register` → you can skip Google Analytics → **Create project**.
-3. In the left sidebar, click **Build → Firestore Database** → **Create database** → choose a region close to Pakistan (e.g. `asia-south1`) → start in **production mode**.
-4. In the left sidebar, click **Build → Authentication** → **Get started** → enable the **Email/Password** sign-in method.
-5. Still in Authentication, go to the **Users** tab → **Add user** → enter the email + password *you* (the admin) will log in with. This is the only account that can approve/reject — create just one, for yourself.
-6. Click the gear icon (⚙) next to "Project Overview" → **Project settings** → scroll to **Your apps** → click the **`</>`** (web) icon → give it any nickname → **Register app**. You'll see a code block with `apiKey`, `authDomain`, etc. Keep this tab open.
+1. https://console.firebase.google.com → your project → **Firestore Database** → create it if you haven't.
+2. **Authentication** → Sign-in method → enable **Email/Password**. Then **Users** tab → **Add user** → this is your admin login.
+3. **Project settings** → **Your apps** → **`</>`** web app → **Config** tab (not "npm"!) → copy the real values into `assets/firebase-config.js` in this repo, replacing every `PASTE_YOUR_...` placeholder. Keep the word `export` at the start of that line — it must read `export const firebaseConfig = { ... };`.
 
-## 2. Paste your config into the project
+## 2. Firestore security rules
 
-Open **`assets/firebase-config.js`** in this folder and replace the placeholder values with the ones Firebase just showed you:
-
-```js
-export const firebaseConfig = {
-  apiKey: "AIza...",
-  authDomain: "al-rasekhoon-register.firebaseapp.com",
-  projectId: "al-rasekhoon-register",
-  storageBucket: "al-rasekhoon-register.appspot.com",
-  messagingSenderId: "...",
-  appId: "..."
-};
-```
-
-## 3. Set Firestore security rules
-
-In Firebase console → **Firestore Database → Rules**, replace the contents with:
+Firestore Database → **Rules** → replace with:
 
 ```
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Anyone can view the live register.
     match /students/{id} {
       allow read: if true;
-      allow write: if request.auth != null;   // only the logged-in admin
+      allow write: if request.auth != null;
     }
 
-    // Anyone can submit a request; only the admin can read/manage the queue.
     match /pending/{id} {
       allow create: if true;
       allow read, update, delete: if request.auth != null;
+    }
+
+    match /familyChains/{id} {
+      allow read: if true;
+      allow write: if request.auth != null;
     }
   }
 }
@@ -61,35 +44,53 @@ service cloud.firestore {
 
 Click **Publish**.
 
-## 4. Put it on GitHub Pages
+## 3. GitHub Pages
 
-1. Create a new GitHub repository (public), e.g. `family-register`.
-2. Upload every file in this folder, keeping the same structure (`index.html`, `submit.html`, `admin.html`, `import-seed.html`, `README.md`, `assets/`, `data/`) to the repo root.
-3. In the repo, go to **Settings → Pages** → under "Build and deployment", set **Source: Deploy from a branch**, branch **main**, folder **/(root)** → **Save**.
-4. After a minute, GitHub shows your live link, something like:
-   `https://yourusername.github.io/family-register/`
+Upload every file here (keeping the folder structure: `index.html`, `submit.html`, `admin.html`, `import-seed.html`, `assets/`, `data/`) to your repo root. Settings → Pages → Deploy from branch → `main` → `/(root)`.
 
-That link is what you share for viewing (`.../index.html` or just the folder link) and submitting (`.../submit.html`). Keep `.../admin.html` for yourself only.
+**Important when uploading folders on GitHub's web uploader:** drag the `assets` folder itself (and `data` folder itself) into the upload box — don't drag the files from inside them, or the folder structure gets lost and pages will show 404s for `assets/app.js` etc.
 
-## 5. Load the existing 90 records (once)
+## 4. One-time import (do this once)
 
-1. Visit `https://yourusername.github.io/family-register/import-seed.html`
-2. Log in with the admin email/password you created in step 1.
-3. Click **Import into Firestore**. It loads all 90 rows from your original Excel file.
-4. Visit `index.html` — you should see everyone, grouped by Family Chain.
+Visit `import-seed.html`, log in, then:
+1. Click **Import students** (only if it says none exist yet — 90 records from the original Excel).
+2. Click **Import family chains** (only if it says none exist yet — the 11 known chains).
 
-You only need to do this once. If you ever need to re-run it, first delete all documents in the `students` collection in the Firebase console (Firestore → `students` → select all → delete), otherwise you'll get duplicates.
+If step 2 fails with a permissions error, you skipped the `familyChains` security rule above — add it and try again.
 
-## How the approval flow works day to day
+## Everyday use
 
-- Someone opens `submit.html`, either updates an existing student (search by name) or adds a new one, and sends it.
-- It shows up in `admin.html` (only visible to you, once logged in) as a card with a **field-by-field diff** — old value vs. submitted value, changed fields highlighted.
-- You pick the **Sr. #** you want it saved as (defaults to the student's current number for updates, or the next free number for new students — but you can type any number to place it wherever you like).
-- **Approve** writes it straight into the live register; **Reject** discards it. Either way it disappears from the queue.
+- **Someone submits a correction or a new student** via `submit.html` → shows up in `admin.html` under Pending, with a diff against the current record → you pick a Sr. # and **Approve**, or **Reject**.
+- **A new family chain joins** → add it directly in the "Family Chains" box at the top of `admin.html` — it instantly appears in the submit form's dropdown. You can also remove one with the × on its chip (only affects the dropdown, not existing students).
+- **Flag a student who's dropped out or attending irregularly** → edit their record (via submit.html → Update, or directly in Firestore) and set **Status** to "Dropped / Skipped Study" or "Irregular Attendance" → their row shows bold with a red tag on the register automatically.
+- **Quick direct edits** (just you, no approval step) → Firebase console → Firestore Database → `students` collection → click the record → edit any field.
 
-## Notes
+## 5. Email notifications on new submissions (optional but recommended)
 
-- Contact numbers and marks were blank in many original rows — those still show as "—" until someone submits them; there's nothing to fix on your end.
-- The register groups by **Family Chain** automatically — grouping is live, not stored order, so it stays correct even as new families are added.
-- Everything is free at this scale (Firebase's free "Spark" plan covers far more reads/writes than ~90 students and occasional updates will ever use).
-- Want more than one admin? Repeat step 1.5 (Authentication → Users → Add user) for each person who should be able to approve — the security rules already allow any logged-in user to approve.
+Get an email the moment someone submits a new student or an update — no backend needed, using the free EmailJS service.
+
+1. Sign up at https://www.emailjs.com (free — 200 emails/month).
+2. **Email Services** → **Add New Service** → connect your Gmail (or any email) → copy the **Service ID**.
+3. **Email Templates** → **Create New Template**. Set the "To email" field to `{{to_email}}`. Subject, e.g.: `{{kind}} — {{student_name}}`. Body, e.g.:
+   ```
+   {{kind}}
+
+   Student: {{student_name}}
+   Submitted by: {{submitter_note}}
+
+   {{summary}}
+
+   Review it here: {{review_link}}
+   ```
+   Save → copy the **Template ID**.
+4. **Account → General** → copy your **Public Key**.
+5. Open `assets/emailjs-config.js` in this repo and fill in `publicKey`, `serviceId`, `templateId`, and `adminEmail` (the address you want notifications sent to). Commit.
+
+That's it — every submission on `submit.html` now emails you. Set `enabled: false` in that same file any time you want to pause notifications without deleting the setup.
+
+## Troubleshooting checklist
+
+- Page looks unstyled / nothing loads → check the browser console (F12). A `404` on `assets/app.js` means the `assets` folder didn't upload correctly (see step 3 above). A `PASTE_YOUR_...` showing up in a network request means `firebase-config.js` still has placeholders.
+- `auth/invalid-api-key` → you copied from the "npm" tab instead of "Config" in Firebase project settings.
+- Module import errors mentioning `firebase-config.js` → that file is missing the `export` keyword in front of `const firebaseConfig`.
+- Family chain dropdown only shows "None of the Above" → you haven't run the "Import family chains" button on `import-seed.html` yet, or the `familyChains` security rule is missing.
