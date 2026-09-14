@@ -2,6 +2,33 @@ import {
   db, collection, getDocs, addDoc, serverTimestamp,
   FIELDS, escapeHtml, fmt, debounce, FAMILY_CHAIN_OTHER
 } from "./app.js";
+import { emailNotifyConfig } from "./emailjs-config.js";
+
+if (emailNotifyConfig.enabled && window.emailjs) {
+  window.emailjs.init({ publicKey: emailNotifyConfig.publicKey });
+}
+
+async function notifyAdmin(kind, submittedData, submitterNote){
+  if (!emailNotifyConfig.enabled || !window.emailjs) return;
+  try {
+    const summary = FIELDS
+      .filter(f => f.key !== "sr" && submittedData[f.key])
+      .map(f => `${f.label}: ${submittedData[f.key]}`)
+      .join("\n");
+    await window.emailjs.send(emailNotifyConfig.serviceId, emailNotifyConfig.templateId, {
+      to_email: emailNotifyConfig.adminEmail,
+      kind: kind === "new" ? "New student submitted" : "Update requested",
+      student_name: submittedData.studentName || "",
+      submitter_note: submitterNote || "(not given)",
+      summary,
+      review_link: location.origin + location.pathname.replace(/submit\.html$/, "admin.html")
+    });
+  } catch (err) {
+    // Don't block or alarm the submitter over a notification failing —
+    // the submission itself already saved successfully.
+    console.warn("Notification email failed to send:", err);
+  }
+}
 
 const modeUpdateBtn = document.getElementById("modeUpdateBtn");
 const modeNewBtn = document.getElementById("modeNewBtn");
@@ -202,6 +229,7 @@ form.addEventListener("submit", async (e) => {
       status: "pending",
       submittedAt: serverTimestamp()
     });
+    notifyAdmin(mode, submittedData, document.getElementById("submitterNote").value.trim());
     showBanner("success", "Thanks — this has been sent to the admin for approval. It'll appear on the register once approved.");
     form.reset();
     selectedStudent = null;
