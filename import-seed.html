@@ -12,7 +12,7 @@
   <div class="masthead-row">
     <div>
       <h1 class="masthead-title">One-time <em>data import</em></h1>
-      <p class="masthead-sub">Loads the 90 records from the original Excel file into the register</p>
+      <p class="masthead-sub">Loads the original records and the family chain list into the register</p>
     </div>
     <nav class="masthead-nav">
       <a class="btn btn-ghost" href="index.html">← Register</a>
@@ -21,46 +21,65 @@
 </header>
 
 <main class="page" style="max-width:640px;">
-  <div class="card form-card">
-    <div id="loginBlock">
-      <p>Log in as admin first (same account as the admin page).</p>
-      <div id="loginBanner"></div>
-      <form id="loginForm">
-        <div class="form-row"><label for="email">Email</label><input id="email" type="email" required /></div>
-        <div class="form-row"><label for="password">Password</label><input id="password" type="password" required /></div>
-        <button class="btn btn-red" type="submit">Log in</button>
-      </form>
+
+  <div id="loginBlock" class="card form-card">
+    <p>Log in as admin first (same account as the admin page).</p>
+    <div id="loginBanner"></div>
+    <form id="loginForm">
+      <div class="form-row"><label for="email">Email</label><input id="email" type="email" required /></div>
+      <div class="form-row"><label for="password">Password</label><input id="password" type="password" required /></div>
+      <button class="btn btn-red" type="submit">Log in</button>
+    </form>
+  </div>
+
+  <div id="importBlock" hidden>
+
+    <div class="card form-card" style="margin-bottom:20px;">
+      <h2 style="font-family:var(--font-display); font-size:1.05rem; margin-top:0;">1. Student records</h2>
+      <p id="studentsStatus" class="form-hint" style="margin-top:0;">Checking…</p>
+      <button class="btn btn-red" id="importStudentsBtn">Import students</button>
+      <div id="studentsBanner" style="margin-top:14px;"></div>
     </div>
 
-    <div id="importBlock" hidden>
-      <p id="statusText">Ready to import <strong id="rowCount">…</strong> records from <code>data/students-seed.json</code>.</p>
-      <p class="form-hint">Safe to run once. Run it again only if you've cleared the <code>students</code> collection first — otherwise it will create duplicates.</p>
-      <button class="btn btn-red" id="importBtn">Import into Firestore</button>
-      <div id="importBanner" style="margin-top:16px;"></div>
+    <div class="card form-card">
+      <h2 style="font-family:var(--font-display); font-size:1.05rem; margin-top:0;">2. Family chain list</h2>
+      <p id="chainsStatus" class="form-hint" style="margin-top:0;">Checking…</p>
+      <button class="btn btn-red" id="importChainsBtn">Import family chains</button>
+      <div id="chainsBanner" style="margin-top:14px;"></div>
     </div>
+
   </div>
 </main>
 
 <script type="module">
-import { db, auth, collection, addDoc, serverTimestamp, onAuthStateChanged, signInWithEmailAndPassword } from "./assets/app.js";
+import {
+  db, auth, collection, getDocs, addDoc, serverTimestamp,
+  onAuthStateChanged, signInWithEmailAndPassword, DEFAULT_FAMILY_CHAINS
+} from "./assets/app.js";
 
 const loginBlock = document.getElementById("loginBlock");
 const importBlock = document.getElementById("importBlock");
 const loginForm = document.getElementById("loginForm");
 const loginBanner = document.getElementById("loginBanner");
-const importBtn = document.getElementById("importBtn");
-const importBanner = document.getElementById("importBanner");
-const rowCountEl = document.getElementById("rowCount");
 
-let seedData = [];
-fetch("data/students-seed.json").then(r => r.json()).then(d => {
-  seedData = d;
-  rowCountEl.textContent = d.length;
-});
+const studentsStatus = document.getElementById("studentsStatus");
+const importStudentsBtn = document.getElementById("importStudentsBtn");
+const studentsBanner = document.getElementById("studentsBanner");
 
-onAuthStateChanged(auth, user => {
+const chainsStatus = document.getElementById("chainsStatus");
+const importChainsBtn = document.getElementById("importChainsBtn");
+const chainsBanner = document.getElementById("chainsBanner");
+
+let seedStudents = [];
+fetch("data/students-seed.json").then(r => r.json()).then(d => { seedStudents = d; });
+
+onAuthStateChanged(auth, async user => {
   loginBlock.hidden = !!user;
   importBlock.hidden = !user;
+  if (user) {
+    await refreshStudentsStatus();
+    await refreshChainsStatus();
+  }
 });
 
 loginForm.addEventListener("submit", async (e) => {
@@ -73,22 +92,62 @@ loginForm.addEventListener("submit", async (e) => {
   }
 });
 
-importBtn.addEventListener("click", async () => {
-  importBtn.disabled = true;
-  importBtn.textContent = "Importing…";
+async function refreshStudentsStatus(){
+  const snap = await getDocs(collection(db, "students"));
+  if (snap.size > 0) {
+    studentsStatus.innerHTML = `<strong>${snap.size}</strong> student record(s) already in the database.`;
+    importStudentsBtn.textContent = "Import anyway (will duplicate!)";
+  } else {
+    studentsStatus.textContent = `No student records yet. Ready to import ${seedStudents.length || "…"} from the original Excel file.`;
+    importStudentsBtn.textContent = "Import students";
+  }
+}
+
+async function refreshChainsStatus(){
+  const snap = await getDocs(collection(db, "familyChains"));
+  if (snap.size > 0) {
+    const names = snap.docs.map(d => d.data().name).join(", ");
+    chainsStatus.innerHTML = `<strong>${snap.size}</strong> family chain(s) already in the database: ${names}`;
+    importChainsBtn.textContent = "Import anyway (will duplicate!)";
+  } else {
+    chainsStatus.textContent = `No family chains yet. Ready to import the ${DEFAULT_FAMILY_CHAINS.length} known chains.`;
+    importChainsBtn.textContent = "Import family chains";
+  }
+}
+
+importStudentsBtn.addEventListener("click", async () => {
+  importStudentsBtn.disabled = true;
   let done = 0;
   try {
-    for (const row of seedData) {
+    for (const row of seedStudents) {
       await addDoc(collection(db, "students"), { ...row, updatedAt: serverTimestamp() });
       done++;
-      importBtn.textContent = `Importing… ${done}/${seedData.length}`;
+      importStudentsBtn.textContent = `Importing… ${done}/${seedStudents.length}`;
     }
-    importBanner.innerHTML = `<div class="banner banner-success">Imported ${done} records. <a href="index.html">View the register →</a></div>`;
+    studentsBanner.innerHTML = `<div class="banner banner-success">Imported ${done} records. <a href="index.html">View the register →</a></div>`;
   } catch (err) {
-    importBanner.innerHTML = `<div class="banner banner-error">Stopped after ${done} records: ${err.message}</div>`;
+    studentsBanner.innerHTML = `<div class="banner banner-error">Stopped after ${done} records: ${err.message}</div>`;
   } finally {
-    importBtn.disabled = false;
-    importBtn.textContent = "Import into Firestore";
+    importStudentsBtn.disabled = false;
+    await refreshStudentsStatus();
+  }
+});
+
+importChainsBtn.addEventListener("click", async () => {
+  importChainsBtn.disabled = true;
+  let done = 0;
+  try {
+    for (const name of DEFAULT_FAMILY_CHAINS) {
+      await addDoc(collection(db, "familyChains"), { name });
+      done++;
+      importChainsBtn.textContent = `Importing… ${done}/${DEFAULT_FAMILY_CHAINS.length}`;
+    }
+    chainsBanner.innerHTML = `<div class="banner banner-success">Imported ${done} family chains. <a href="submit.html">Check the dropdown →</a></div>`;
+  } catch (err) {
+    chainsBanner.innerHTML = `<div class="banner banner-error">Stopped after ${done}: ${err.message}. If this says "Missing or insufficient permissions", add the familyChains rule in Firestore first (see README).</div>`;
+  } finally {
+    importChainsBtn.disabled = false;
+    await refreshChainsStatus();
   }
 });
 </script>
