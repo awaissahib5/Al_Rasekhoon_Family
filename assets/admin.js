@@ -19,16 +19,9 @@ const chainBanner = document.getElementById("chainBanner");
 
 const DISPLAY_FIELDS = FIELDS.filter(f => f.key !== "sr");
 
-const DEFAULT_FAMILY_CHAINS = [
-  "Fazal Ahmad", "Dilawar hussain", "Muhammad Nawaz", "Iqbal Hussain",
-  "Saleem Raza", "Faqeer Hussain", "Mashkoor Hussain", "Nokar Hussain",
-  "Haji Gulzar Hussain", "Mehdi Hassan", "Mukhtiar Hussain"
-];
-
 let studentsById = new Map();
 let currentPendingDocs = [];
 let currentChains = []; // [{id, name}]
-let chainsSeeded = false;
 const unsubs = [];
 
 onAuthStateChanged(auth, user => {
@@ -74,14 +67,7 @@ function startListening(){
     err => { pendingListEl.innerHTML = `<div class="empty-state">${escapeHtml(err.message)}</div>`; }
   ));
 
-  unsubs.push(onSnapshot(collection(db, "familyChains"), async snap => {
-    if (snap.empty && !chainsSeeded) {
-      chainsSeeded = true; // avoid a double-seed race if this fires twice quickly
-      for (const name of DEFAULT_FAMILY_CHAINS) {
-        await addDoc(collection(db, "familyChains"), { name });
-      }
-      return; // the snapshot will fire again with the seeded data
-    }
+  unsubs.push(onSnapshot(collection(db, "familyChains"), snap => {
     currentChains = snap.docs.map(d => ({ id: d.id, ...d.data() }))
       .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
     renderChains();
@@ -95,7 +81,7 @@ function stopListening(){
 
 function renderChains(){
   if (currentChains.length === 0) {
-    chainListEl.innerHTML = `<p class="muted" style="margin:0;">No family chains yet — add the first one below.</p>`;
+    chainListEl.innerHTML = `<p class="muted" style="margin:0;">No family chains yet — add one below, or run the one-time import on <a href="import-seed.html">import-seed.html</a> to load the original 11.</p>`;
     return;
   }
   chainListEl.innerHTML = currentChains.map(c => `

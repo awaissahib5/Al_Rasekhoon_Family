@@ -7,13 +7,13 @@ const resultCountEl = document.getElementById("resultCount");
 
 let allStudents = [];
 
+// statuses that should visually stand out as needing attention
+const FLAGGED_STATUSES = new Set(["dropped", "irregular"]);
+
 function cell(v){
   const s = fmt(v);
   return s ? escapeHtml(s) : `<span class="empty-cell">—</span>`;
 }
-
-// statuses that should visually stand out as needing attention
-const FLAGGED_STATUSES = new Set(["dropped", "irregular"]);
 
 function statusBadge(status){
   if (!status) return `<span class="empty-cell">—</span>`;

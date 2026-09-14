@@ -19,6 +19,15 @@ export {
   onAuthStateChanged, signInWithEmailAndPassword, signOut
 };
 
+// The 11 known family chains. Used to seed the "familyChains" Firestore
+// collection the first time (via import-seed.html) — after that, the
+// live list in Firestore is the source of truth, editable by the admin.
+export const DEFAULT_FAMILY_CHAINS = [
+  "Fazal Ahmad", "Dilawar hussain", "Muhammad Nawaz", "Iqbal Hussain",
+  "Saleem Raza", "Faqeer Hussain", "Mashkoor Hussain", "Nokar Hussain",
+  "Haji Gulzar Hussain", "Mehdi Hassan", "Mukhtiar Hussain"
+];
+
 // Sentinel value used by the Family Chain dropdown for "None of the
 // Above" — when selected, the submit form shows a free-text box instead.
 export const FAMILY_CHAIN_OTHER = "__other__";

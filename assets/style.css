@@ -31,8 +31,7 @@
 html{ -webkit-text-size-adjust: 100%; }
 body{
   margin:0;
-  background:
-    linear-gradient(var(--paper), var(--paper));
+  background: var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
   line-height: 1.5;
@@ -275,7 +274,7 @@ table.register-table{
 .status-ok{ background: var(--moss-dim); color: var(--moss); }
 .status-flag{ background: #F6DEDB; color: var(--ledger-red); }
 
-/* a whole record that needs attention: bold name + red-tinted left edge */
+/* a whole record that needs attention: bold name + red-tinted background */
 tr.row-flagged td{ font-weight: 600; background: #FBF3F1; }
 tr.row-flagged .student-name{ color: var(--ledger-red); }
 tr.row-flagged:hover td{ background: #F6DEDB; }
