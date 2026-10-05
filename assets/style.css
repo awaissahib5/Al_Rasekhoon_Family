@@ -66,6 +66,22 @@ button, input, select, textarea{ font-family: inherit; font-size: 1rem; }
   margin: 0 auto;
   flex-wrap: wrap;
 }
+.masthead-brand{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+}
+.masthead-logo{
+  height: 42px;
+  width: 42px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+}
+@media (max-width: 480px){
+  .masthead-logo{ height: 34px; width: 34px; }
+}
 .masthead-title{
   font-family: var(--font-display);
   font-weight: 700;
@@ -172,6 +188,7 @@ button, input, select, textarea{ font-family: inherit; font-size: 1rem; }
   font-family: var(--font-mono);
   font-size: .82rem;
   color: var(--ink-soft);
+  margin-left: auto;
 }
 
 /* ---------- family group ---------- */
