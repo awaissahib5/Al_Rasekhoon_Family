@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — Al-Rasekhoon Family Register</title>
+<link rel="icon" type="image/png" href="assets/favicon.png" />
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-row">
+    <div class="masthead-brand">
+      <img src="assets/logo.png" alt="Al-Rasekhoon" class="masthead-logo" onerror="this.style.display='none'" />
+      <div>
+        <h1 class="masthead-title">Admin <em>review</em></h1>
+        <p class="masthead-sub">Approve or reject submitted updates</p>
+      </div>
+    </div>
+    <nav class="masthead-nav">
+      <a class="btn btn-ghost" href="index.html">← Register</a>
+      <button class="btn btn-ghost" id="logoutBtn" hidden>Log out</button>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <div id="loginView" class="card login-shell" hidden>
+    <h1>Admin log in</h1>
+    <div id="loginBanner"></div>
+    <form id="loginForm">
+      <div class="form-row">
+        <label for="email">Email</label>
+        <input id="email" type="email" required autocomplete="username" />
+      </div>
+      <div class="form-row">
+        <label for="password">Password</label>
+        <input id="password" type="password" required autocomplete="current-password" />
+      </div>
+      <button class="btn btn-red" type="submit" style="width:100%;">Log in</button>
+    </form>
+  </div>
+
+  <div id="pendingView" hidden>
+
+    <div class="card" style="padding:20px clamp(14px,2.5vw,24px); margin-bottom:24px;">
+      <h2 style="font-family:var(--font-display); font-size:1.05rem; margin:0 0 4px;">Family Chains</h2>
+      <p class="form-hint" style="margin-top:0;">Shown as a dropdown on the submit form. Add a new one here as new families join — no code changes needed.</p>
+      <div id="chainBanner"></div>
+      <div id="chainList" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;"></div>
+      <form id="chainForm" style="display:flex; gap:10px; flex-wrap:wrap;">
+        <input id="chainInput" type="text" placeholder="New family chain name…" style="flex:1 1 220px; padding:9px 12px; border:1.5px solid var(--line); border-radius:8px;" />
+        <button class="btn btn-moss btn-sm" type="submit">Add</button>
+      </form>
+    </div>
+
+    <div class="toolbar">
+      <span class="result-count" id="pendingCount"></span>
+    </div>
+    <div class="card" id="pendingList"></div>
+  </div>
+
+</main>
+
+<script type="module" src="assets/admin.js"></script>
+</body>
+</html>
