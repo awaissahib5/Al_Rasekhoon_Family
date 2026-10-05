@@ -3,16 +3,20 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Al-Rasekhoon — Student Family Register</title>
+<title>Al-Rasekhoon — Family Register</title>
+<link rel="icon" type="image/png" href="assets/favicon.png" />
 <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
 
 <header class="masthead">
   <div class="masthead-row">
-    <div>
-      <h1 class="masthead-title">Al-Rasekhoon <em>Family Register</em></h1>
-      <p class="masthead-sub">Students live record</p>
+    <div class="masthead-brand">
+      <img src="assets/logo.png" alt="Al-Rasekhoon" class="masthead-logo" onerror="this.style.display='none'" />
+      <div>
+        <h1 class="masthead-title">Al-Rasekhoon <em>Family Register</em></h1>
+        <p class="masthead-sub">Students under sponsorship — live record</p>
+      </div>
     </div>
     <nav class="masthead-nav">
       <a class="btn btn-red" href="submit.html">+ Add / update a record</a>
@@ -29,6 +33,23 @@
     <select class="chip-select" id="familyFilter">
       <option value="">All family chains</option>
     </select>
+    <select class="chip-select" id="classFilter">
+      <option value="">All classes</option>
+    </select>
+    <select class="chip-select" id="statusFilter">
+      <option value="">Any status</option>
+    </select>
+    <select class="chip-select" id="marksFilter">
+      <option value="">Marks: any</option>
+      <option value="recorded">Marks recorded</option>
+      <option value="missing">Marks missing</option>
+    </select>
+    <select class="chip-select" id="contactFilter">
+      <option value="">Contact: any</option>
+      <option value="recorded">Contact recorded</option>
+      <option value="missing">Contact missing</option>
+    </select>
+    <button class="btn btn-ghost btn-sm" id="clearFilters" hidden>Clear filters</button>
     <span class="result-count" id="resultCount"></span>
   </div>
 
@@ -40,13 +61,8 @@
     </div>
   </div>
 
-<p class="footer-note">
-  Spotted a mistake, or a Contact # that's missing? Use "<strong>Add / update a record</strong>" above —<br>
-  changes go to the admin for approval before they appear here.<br>
-  Developed By : Muhammad Awais<br>
-  Contact # +92-3166584884<br>
-  Al-Rasekhoon Welfare Organization ©
-</p>
+  <p class="footer-note">Spotted a mistake, or a Contact # that's missing? Use "Add / update a record" above —
+    changes go to the admin for approval before they appear here.</p>
 </main>
 
 <script type="module" src="assets/view.js"></script>
