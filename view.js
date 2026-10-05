@@ -1,23 +1,58 @@
-import { db, collection, onSnapshot, query, orderBy, escapeHtml, fmt, debounce } from "./app.js";
+import {
+  db, collection, onSnapshot, query, orderBy,
+  escapeHtml, fmt, debounce, statusLabel, STATUS_OPTIONS
+} from "./app.js";
 
 const contentEl = document.getElementById("content");
 const searchEl = document.getElementById("search");
 const familyFilterEl = document.getElementById("familyFilter");
+const classFilterEl = document.getElementById("classFilter");
+const statusFilterEl = document.getElementById("statusFilter");
+const marksFilterEl = document.getElementById("marksFilter");
+const contactFilterEl = document.getElementById("contactFilter");
 const resultCountEl = document.getElementById("resultCount");
+const clearFiltersBtn = document.getElementById("clearFilters");
 
 let allStudents = [];
+
+// statuses that should visually stand out as needing attention
+const FLAGGED_STATUSES = new Set(["dropped", "irregular"]);
 
 function cell(v){
   const s = fmt(v);
   return s ? escapeHtml(s) : `<span class="empty-cell">—</span>`;
 }
 
+function statusBadge(status){
+  if (!status) return `<span class="empty-cell">—</span>`;
+  const flagged = FLAGGED_STATUSES.has(status);
+  return `<span class="status-tag ${flagged ? "status-flag" : "status-ok"}">${escapeHtml(statusLabel(status))}</span>`;
+}
+
 function render(){
   const q = searchEl.value.trim().toLowerCase();
   const familyPick = familyFilterEl.value;
+  const classPick = classFilterEl.value;
+  const statusPick = statusFilterEl.value;
+  const marksPick = marksFilterEl.value;     // "", "recorded", "missing"
+  const contactPick = contactFilterEl.value; // "", "recorded", "missing"
 
   let rows = allStudents;
   if (familyPick) rows = rows.filter(s => s.familyChain === familyPick);
+  if (classPick) rows = rows.filter(s => s.presentClass === classPick);
+  if (statusPick) rows = rows.filter(s => (s.status || "") === statusPick);
+  if (marksPick) {
+    rows = rows.filter(s => {
+      const hasMarks = !!(s.totalMarks || s.obtMarks);
+      return marksPick === "recorded" ? hasMarks : !hasMarks;
+    });
+  }
+  if (contactPick) {
+    rows = rows.filter(s => {
+      const hasContact = !!s.contact;
+      return contactPick === "recorded" ? hasContact : !hasContact;
+    });
+  }
   if (q) {
     rows = rows.filter(s => {
       const hay = [s.studentName, s.fatherName, s.familyChain, s.instituteName, s.presentClass, s.contact]
@@ -26,12 +61,15 @@ function render(){
     });
   }
 
+  const anyFilterActive = familyPick || classPick || statusPick || marksPick || contactPick || q;
+  clearFiltersBtn.hidden = !anyFilterActive;
+
   resultCountEl.textContent = `${rows.length} of ${allStudents.length} record${allStudents.length===1?"":"s"}`;
 
   if (rows.length === 0) {
     contentEl.innerHTML = `<div class="card empty-state">
       <div class="big">No matching records</div>
-      <div>Try a different name or clear the search.</div>
+      <div>Try different filters, or clear them below.</div>
     </div>`;
     return;
   }
@@ -57,16 +95,17 @@ function render(){
       <div class="register">
         <table class="register-table">
           <thead><tr>
-            <th>Sr.#</th><th>Student</th><th>Father</th><th>Class</th>
+            <th>Sr.#</th><th>Student</th><th>Father</th><th>Class</th><th>Status</th>
             <th>Institute</th><th>Marks</th><th>Contact #</th><th>Remarks</th>
           </tr></thead>
           <tbody>
             ${students.map(s => `
-              <tr>
+              <tr class="${FLAGGED_STATUSES.has(s.status) ? "row-flagged" : ""}">
                 <td class="sr-badge">${cell(s.sr)}</td>
                 <td class="student-name">${cell(s.studentName)}</td>
                 <td class="muted">${cell(s.fatherName)}</td>
                 <td>${cell(s.presentClass)}</td>
+                <td>${statusBadge(s.status)}</td>
                 <td class="muted">${cell(s.instituteName)}</td>
                 <td class="marks">${s.totalMarks || s.obtMarks ? `${cell(s.obtMarks)} / ${cell(s.totalMarks)}` : `<span class="empty-cell">—</span>`}</td>
                 <td class="marks">${cell(s.contact)}</td>
@@ -76,7 +115,7 @@ function render(){
         </table>
         <div class="register-cards">
           ${students.map(s => `
-            <div class="reg-card">
+            <div class="reg-card ${FLAGGED_STATUSES.has(s.status) ? "row-flagged" : ""}">
               <div class="reg-card-top">
                 <span class="student-name">${cell(s.studentName)}</span>
                 <span class="sr-badge">#${cell(s.sr)}</span>
@@ -84,6 +123,7 @@ function render(){
               <dl>
                 <dt>Father</dt><dd>${cell(s.fatherName)}</dd>
                 <dt>Class</dt><dd>${cell(s.presentClass)}</dd>
+                <dt>Status</dt><dd>${statusBadge(s.status)}</dd>
                 <dt>Institute</dt><dd>${cell(s.instituteName)}</dd>
                 <dt>Marks</dt><dd>${s.totalMarks || s.obtMarks ? `${cell(s.obtMarks)} / ${cell(s.totalMarks)}` : "—"}</dd>
                 <dt>Contact</dt><dd>${cell(s.contact)}</dd>
@@ -97,18 +137,41 @@ function render(){
   contentEl.innerHTML = html;
 }
 
-function populateFamilyFilter(){
-  const current = familyFilterEl.value;
+function populateFilterOptions(){
+  const familyCurrent = familyFilterEl.value;
   const families = [...new Set(allStudents.map(s => s.familyChain).filter(Boolean))].sort();
   familyFilterEl.innerHTML = `<option value="">All family chains</option>` +
     families.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join("");
-  familyFilterEl.value = current;
+  familyFilterEl.value = familyCurrent;
+
+  const classCurrent = classFilterEl.value;
+  const classes = [...new Set(allStudents.map(s => s.presentClass).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  classFilterEl.innerHTML = `<option value="">All classes</option>` +
+    classes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  classFilterEl.value = classCurrent;
+
+  if (!statusFilterEl.dataset.populated) {
+    statusFilterEl.innerHTML = `<option value="">Any status</option>` +
+      STATUS_OPTIONS.filter(o => o.value).map(o => `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`).join("");
+    statusFilterEl.dataset.populated = "1";
+  }
 }
+
+clearFiltersBtn.addEventListener("click", () => {
+  searchEl.value = "";
+  familyFilterEl.value = "";
+  classFilterEl.value = "";
+  statusFilterEl.value = "";
+  marksFilterEl.value = "";
+  contactFilterEl.value = "";
+  render();
+});
 
 const q = query(collection(db, "students"), orderBy("sr", "asc"));
 onSnapshot(q, snap => {
   allStudents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  populateFamilyFilter();
+  populateFilterOptions();
   render();
 }, err => {
   contentEl.innerHTML = `<div class="card empty-state">
@@ -119,5 +182,5 @@ onSnapshot(q, snap => {
   </div>`;
 });
 
-searchEl.addEventListener("input", debounce(render, 150));
-familyFilterEl.addEventListener("change", render);
+[searchEl].forEach(el => el.addEventListener("input", debounce(render, 150)));
+[familyFilterEl, classFilterEl, statusFilterEl, marksFilterEl, contactFilterEl].forEach(el => el.addEventListener("change", render));

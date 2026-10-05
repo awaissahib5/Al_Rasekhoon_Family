@@ -31,8 +31,7 @@
 html{ -webkit-text-size-adjust: 100%; }
 body{
   margin:0;
-  background:
-    linear-gradient(var(--paper), var(--paper));
+  background: var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
   line-height: 1.5;
@@ -66,6 +65,18 @@ button, input, select, textarea{ font-family: inherit; font-size: 1rem; }
   max-width: 1180px;
   margin: 0 auto;
   flex-wrap: wrap;
+}
+.masthead-brand{
+  display:flex;
+  align-items:center;
+  gap: 14px;
+}
+.masthead-logo{
+  height: 52px;
+  width: auto;
+  max-width: 120px;
+  object-fit: contain;
+  border-radius: 6px;
 }
 .masthead-title{
   font-family: var(--font-display);
@@ -173,6 +184,7 @@ button, input, select, textarea{ font-family: inherit; font-size: 1rem; }
   font-family: var(--font-mono);
   font-size: .82rem;
   color: var(--ink-soft);
+  margin-left: auto;
 }
 
 /* ---------- family group ---------- */
@@ -275,7 +287,7 @@ table.register-table{
 .status-ok{ background: var(--moss-dim); color: var(--moss); }
 .status-flag{ background: #F6DEDB; color: var(--ledger-red); }
 
-/* a whole record that needs attention: bold name + red-tinted left edge */
+/* a whole record that needs attention: bold name + red-tinted background */
 tr.row-flagged td{ font-weight: 600; background: #FBF3F1; }
 tr.row-flagged .student-name{ color: var(--ledger-red); }
 tr.row-flagged:hover td{ background: #F6DEDB; }
